@@ -1,5 +1,11 @@
 param([string]$OutputDirectory = ".\bin")
 
+
+$secure_password = ConvertTo-SecureString $Env:UNITY_PASSWORD -AsPlainText -Force
+$secure_serial = ConvertTo-SecureString $Env:UNITY_SERIAL -AsPlainText -Force
+$credentials = New-Object System.Management.Automation.PSCredential ($Env:UNITY_EMAIL, $secure_password)
+
+
 Import-Module UnitySetup -ErrorAction Stop -MinimumVersion 4.0.97
 Import-Module VSSetup -ErrorAction Stop -MinimumVersion 2.0.1.32208
 
@@ -39,8 +45,13 @@ if ( $LASTEXITCODE -ne 0 ) {
 # Copy .dlls from the build into the Packager folder
 Copy-Item ".\CreateDLL\bin\Release\NugetForUnity.dll" ".\Packager\Assets\NuGet\Editor"
 
+
 # Launch Unity to export the NuGetForUnity package
-Start-UnityEditor -Project ".\Packager" -BatchMode -Quit -Wait -ExecuteMethod "NugetForUnity.Export.Execute" -LogFile ".\Packager\NuGetForUnity.unitypackage.log"
+#Start-UnityEditor -Credential $credentials -LogFile "Credentials.log"
+Start-UnityEditor -Credential $credentials -Serial $secure_serial -ErrorAction SilentlyContinue -Project ".\Packager" -BatchMode -Quit -Wait -ExecuteMethod "NugetForUnity.Export.Execute" -LogFile ".\Packager\NuGetForUnity.unitypackage.log"
+
+
+Start-UnityEditor -Credential $credentials -ReturnLicense
 
 # Copy artifacts to output directory
 if ( !(Test-Path $OutputDirectory) ) { New-Item -ItemType Directory $OutputDirectory }

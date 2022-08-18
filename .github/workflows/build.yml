@@ -1,0 +1,41 @@
+name: Nuget for Unity Build
+
+on:
+  workflow_dispatch:
+    inputs:
+  push:
+    branches:
+      - master
+      - feature/gh-workflow
+  pull_request:
+    branches:
+      - master
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix: 
+        os: [windows-latest]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Install dependencies
+      shell: pwsh
+      run: |
+        Install-Module UnitySetup -Force -ErrorAction Stop -MinimumVersion 4.0.97
+        Install-Module VSSetup -Force -ErrorAction Stop -MinimumVersion 2.0.1.32208
+        Import-Module UnitySetup -ErrorAction Stop -MinimumVersion 4.0.97
+        Find-UnitySetupInstaller -Version 2018.4.30f1 -Components Windows | Install-UnitySetupInstance
+    - name: Build
+      env:
+#        UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+        UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+      shell: pwsh
+      run: .\build.ps1
+    - uses: actions/upload-artifact@v3
+      with:
+        name: NuGetForUnity
+        path: bin/*
