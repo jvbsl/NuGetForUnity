@@ -7,6 +7,7 @@ on:
     branches:
       - master
       - feature/gh-workflow
+      - feature/tmp-build
   pull_request:
     branches:
       - master
